@@ -170,13 +170,19 @@ class CardataStreamManager:
         client.on_subscribe = self._handle_subscribe
         client.on_message = self._handle_message
         client.on_disconnect = self._handle_disconnect
+        
         context = ssl.create_default_context()
         if hasattr(ssl, "TLSVersion"):
-            context.minimum_version = ssl.TLSVersion.TLSv1_2
-            if hasattr(context, "maximum_version"):
-                context.maximum_version = ssl.TLSVersion.TLSv1_2
+            context.minimum_version = ssl.TLSVersion.TLSv1_3
+            # Nie ustawiamy maximum_version – niech negocjuje najwyższą możliwą (TLS 1.3+)
+            context.check_hostname = True
+            context.verify_mode = ssl.CERT_REQUIRED
+        
+        # Opcjonalnie: wymuszenie konkretnego szyfru z Twojego udanego testu openssl
+        # context.set_ciphers('TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256')
+        
         client.tls_set_context(context)
-        client.tls_insecure_set(False)
+        client.tls_insecure_set(False)  # zawsze False – weryfikacja certyfikatu obowiązkowa
         client.reconnect_delay_set(min_delay=5, max_delay=60)
 
         try:
